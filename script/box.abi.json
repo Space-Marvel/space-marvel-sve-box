@@ -269,14 +269,14 @@
         "type": "uint32"
       },
       {
-        "internalType": "uint256",
-        "name": "_maxRandom",
-        "type": "uint256"
-      },
-      {
         "internalType": "uint256[]",
         "name": "_idList",
         "type": "uint256[]"
+      },
+      {
+        "internalType": "uint8[]",
+        "name": "_rates",
+        "type": "uint8[]"
       }
     ],
     "name": "createBox",
@@ -331,6 +331,19 @@
     "name": "updateEndTime",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getRandom",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "unlock",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -408,6 +421,11 @@
         "internalType": "uint256[]",
         "name": "idList",
         "type": "uint256[]"
+      },
+      {
+        "internalType": "uint8[]",
+        "name": "rates",
+        "type": "uint8[]"
       }
     ],
     "stateMutability": "view",

@@ -1,10 +1,10 @@
-// SPDX-License-Identifier: MIT
 pragma solidity 0.8.6;
 
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 contract SpaceMarvelBox is Ownable {
     using SafeMath for uint256;
@@ -32,6 +32,7 @@ contract SpaceMarvelBox is Ownable {
         string name;
         PaymentInfo[] payment;
         uint256[] idList;
+        uint8[] rates;
         mapping(address => uint256[]) purchasedNft;
         // total number of NFT(s)
         uint256 total;
@@ -78,8 +79,8 @@ contract SpaceMarvelBox is Ownable {
         uint32 _personalLimit,
         uint32 _startTime,
         uint32 _endTime,
-        uint256 _maxRandom,
-        uint256[] memory _idList
+        uint256[] memory _idList,
+        uint8[] memory _rates
     ) external {
         require(
             whitelist[_msgSender()] || admin[_msgSender()],
@@ -87,16 +88,17 @@ contract SpaceMarvelBox is Ownable {
         );
 
         require(_endTime > block.timestamp, "Error: invalid end time");
-        require(_maxRandom > 0, "Error: invalid max random");
         require(boxs[_nft].creator == address(0), "Error: box created alrady");
+
         require(
             IERC721(_nft).isApprovedForAll(_msgSender(), address(this)),
             "Error: not ApprovedForAll"
         );
         require(_payment.length > 0, "Error: invalid payment");
 
-        require(_idList.length > 0, "Error: empty nft list");
+        // require(_idList.length > 0, "Error: empty nft list");
         require(_checkOwnership(_idList, _nft), "Error: not owner");
+        require(_checkRate(_rates), "Error: rate invalid");
 
         Box storage box = boxs[_nft];
         for (uint256 i = 0; i < _payment.length; i++) {
@@ -119,8 +121,17 @@ contract SpaceMarvelBox is Ownable {
         box.personalLimit = _personalLimit;
         box.startTime = _startTime;
         box.endTime = _endTime;
-        box.maxRandom = _maxRandom;
+        box.maxRandom = _rates.length - 1;
         box.idList = _idList;
+        box.rates = _rates;
+
+        // uint8 totalRate = 0;
+        // box.rates.push(totalRate);
+        // for (uint8 i = 0; i < _rates.length; i++) {
+        //     totalRate += _rates[i];
+        //     box.rates.push(totalRate);
+        // }
+
         box.total = _idList.length;
 
         emit CreationBox(
@@ -165,6 +176,18 @@ contract SpaceMarvelBox is Ownable {
         box.endTime = _endTime;
     }
 
+    function getRandom() public view returns (uint256 unlock) {
+        unlock = _random(100);
+        uint8[7] memory rates = [0, 10, 50, 90, 97, 99, 100];
+        for (uint8 i = 0; i < 6; i++) {
+            if (unlock >= rates[i] && unlock <= rates[i + 1]) {
+                unlock = i + 1;
+                break;
+            }
+        }
+        return unlock;
+    }
+
     function buyBox(address _nft, uint8 _paymentIndex) external payable {
         require(tx.origin == _msgSender(), "Error: no contracts");
         Box storage box = boxs[_nft];
@@ -176,17 +199,28 @@ contract SpaceMarvelBox is Ownable {
         );
         require(
             (box.purchasedNft[_msgSender()].length + 1) <= box.personalLimit,
-            "exceeds personal limit"
+            "Error: exceeds personal limit"
         );
-        require(!(box.canceled), "sale canceled");
+        require(!(box.canceled), "Error: sale canceled");
+        require(box.idList.length > 0, "Error: sale sell all");
 
         address creator = box.creator;
         uint256 total = box.idList.length;
 
-        require(total > 0, "no NFT left");
+        require(total > 0, "Error: no NFT left");
 
         //generate number nft unlock
-        uint256 unlock = _random(box.maxRandom);
+        /* [10, 40, 40, 7, 2, 1] =>[0, 10, 50, 90, 97, 99, 100]
+
+        */
+        uint256 unlock = _random(100);
+        for (uint8 i = 0; i < box.maxRandom; i++) {
+            if (unlock >= box.rates[i] && unlock <= box.rates[i + 1]) {
+                unlock = i + 1;
+                break;
+            }
+        }
+        if (unlock > total) unlock = total;
 
         uint256 rand = _random(0);
 
@@ -273,7 +307,8 @@ contract SpaceMarvelBox is Ownable {
             uint256 startTime,
             uint256 endTime,
             uint256 maxRandom,
-            uint256[] memory idList
+            uint256[] memory idList,
+            uint8[] memory rates
         )
     {
         Box storage box = boxs[_nft];
@@ -284,6 +319,7 @@ contract SpaceMarvelBox is Ownable {
         endTime = box.endTime;
         maxRandom = box.maxRandom;
         idList = box.idList;
+        rates = box.rates;
     }
 
     function getBoxStatus(address _nft)
@@ -396,5 +432,19 @@ contract SpaceMarvelBox is Ownable {
             _box.idList[_index] = lastNftId;
         }
         _box.idList.pop();
+    }
+
+    function _checkRate(uint8[] memory _rates) internal pure returns (bool) {
+        if (
+            _rates.length == 0 ||
+            _rates[0] != 0 ||
+            _rates[_rates.length - 1] != 100
+        ) return false;
+
+        for (uint8 i = 0; i < _rates.length - 1; i++) {
+            if (_rates[i] >= _rates[i + 1]) return false;
+        }
+
+        return true;
     }
 }

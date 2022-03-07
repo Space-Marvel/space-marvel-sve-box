@@ -10,34 +10,33 @@ module.exports = function (deployer) {
     )
 
     const heroPayment=[
-        '0x498966e1bBa2f1B1673d5997EF59aca357a8b3AA',
+        '0xb04Eb81A8c1Dc123315d19B945feCff186503d87', //SVE
         new BigNumber(50).multipliedBy(10 ** 18).integerValue()
     ]
     const spaceshipPayment=[
-        '0x498966e1bBa2f1B1673d5997EF59aca357a8b3AA',
+        '0xb04Eb81A8c1Dc123315d19B945feCff186503d87', //SVE
         new BigNumber(100).multipliedBy(10 ** 18).integerValue()
     ]
 
-    await box.createBox(
-        '0x15c7760173F6b402F1996E76d85F608403331521', //SVEHeroCore
-        'Hero',
-        [heroPayment],
-        10, // personal limit
-        1641483969, //start time
-        1641829569, // end time
-        6, // max random
-        []
-    )
+    // await box.createBox(
+    //     '0x2d844811FC8f5023B215ddF0f3643Ce27764F7D1', //SVEHeroCore
+    //     'Hero',
+    //     [heroPayment],
+    //     10, // personal limit
+    //     1641483969, //start time
+    //     1641829569, // end time
+    //     []
+    // )
 
-    await box.createBox(
-        '0xD62DD7220D9d22247D130CA46ec496dE3c97b0D2', //SVEHeroCore
-        'SpaceShip',
-        [spaceshipPayment],
-        10, // personal limit
-        1641483969, //start time
-        1641829569, // end time
-        6, // max random
-        []
-    )
+    // await box.createBox(
+    //     '0xD62DD7220D9d22247D130CA46ec496dE3c97b0D2', //SVEHeroCore
+    //     'SpaceShip',
+    //     [spaceshipPayment],
+    //     10, // personal limit
+    //     1641483969, //start time
+    //     1641829569, // end time
+    //     6, // max random
+    //     []
+    // )
   })
 }
